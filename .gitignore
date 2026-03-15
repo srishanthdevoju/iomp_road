@@ -1,0 +1,59 @@
+# ── Python ──────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# ── Virtual Environments ────────────────────────────
+venv/
+env/
+.env/
+.venv/
+
+# ── IDE / Editor ────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# ── OS Generated ────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# ── Model Weights (large binary) ────────────────────
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# ── Video Files (large media) ───────────────────────
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.wmv
+
+# Allow the website's analyzed video (needed for Vercel deploy)
+!website/input_analyzed_h264.mp4
+
+# ── Vercel ───────────────────────────────────────────
+.vercel/
+
+# ── Logs & Misc ─────────────────────────────────────
+*.log
+*.bak
+*.tmp
+.cache/
+
+# ── Jupyter Notebooks checkpoints ───────────────────
+.ipynb_checkpoints/

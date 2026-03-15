@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="ROAD — Real-time Object Analysis for Driving Safety. AI-powered road safety detection using YOLOv8.">
+  <title>ROAD | Real-time Object Analysis for Driving Safety</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="#" class="nav-brand">
+        <span class="brand-mark">R</span>ROAD
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#video-showcase">Watch</a></li>
+        <li><a href="#modules">Modules</a></li>
+        <li><a href="#pipeline">Pipeline</a></li>
+        <li><a href="#risk">Risk</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#tech">Tech</a></li>
+      </ul>
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Menu">☰</button>
+    </div>
+  </nav>
+
+  <!-- HERO — Netflix banner with video background -->
+  <section class="hero" id="hero">
+    <div class="hero-video-bg">
+      <video autoplay muted loop playsinline>
+        <source src="input_analyzed_h264.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-tag">🔴 AI-POWERED DETECTION</div>
+        <h1>Real-time Object Analysis for Driving Safety</h1>
+        <p class="tagline">
+          An intelligent system that processes dashcam footage to detect vehicles and pedestrians,
+          track their motion, classify lane position, and compute collision risk — all in real time.
+        </p>
+        <div class="hero-actions">
+          <a href="#video-showcase" class="btn btn-play" id="watchBtn">▶ Watch Demo</a>
+          <a href="#pipeline" class="btn btn-info">ℹ More Info</a>
+        </div>
+        <div class="hero-meta">
+          <span class="meta-badge">YOLOv8</span>
+          <span class="meta-item">🎯 6 Object Classes</span>
+          <span class="meta-item">📊 4 Risk Factors</span>
+          <span class="meta-item">⚡ Real-time</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIDEO SHOWCASE -->
+  <section id="video-showcase">
+    <div class="container">
+      <div class="section-header">
+        <h2>🎬 Analyzed Output</h2>
+      </div>
+      <div class="showcase-player">
+        <video controls preload="metadata" id="mainVideo">
+          <source src="input_analyzed_h264.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+      <p class="showcase-caption">
+        Annotated dashcam footage — color-coded bounding boxes, motion labels, lane dividers, and real-time risk
+        dashboard
+      </p>
+    </div>
+  </section>
+
+  <!-- MODULES — Netflix horizontal scroll -->
+  <section id="modules">
+    <div class="container">
+      <div class="section-header">
+        <h2>System Modules</h2>
+        <span class="see-all">6 modules →</span>
+      </div>
+      <div class="card-row">
+        <div class="module-card fade-in">
+          <div class="card-thumb">🔍</div>
+          <div class="card-body">
+            <h3>Object Detector</h3>
+            <span class="card-file">detector.py</span>
+            <p>YOLOv8 nano model detects persons, bicycles, cars, motorcycles, buses, and trucks with 0.5 confidence
+              threshold.</p>
+          </div>
+        </div>
+        <div class="module-card fade-in">
+          <div class="card-thumb">📡</div>
+          <div class="card-body">
+            <h3>Centroid Tracker</h3>
+            <span class="card-file">tracker.py</span>
+            <p>Euclidean distance matching across frames with 30-frame history. Detects approaching, departing, or
+              stationary motion.</p>
+          </div>
+        </div>
+        <div class="module-card fade-in">
+          <div class="card-thumb">🛤️</div>
+          <div class="card-body">
+            <h3>Lane Detector</h3>
+            <span class="card-file">lane_detector.py</span>
+            <p>Divides frame into three zones — Left (0-35%), Center (35-65%), Right (65-100%) for spatial lane
+              classification.</p>
+          </div>
+        </div>
+        <div class="module-card fade-in">
+          <div class="card-thumb">⚡</div>
+          <div class="card-body">
+            <h3>Risk Assessor</h3>
+            <span class="card-file">risk_assessor.py</span>
+            <p>Composite risk score (0-100%) using 4 weighted factors: distance, motion, lane position, and object type.
+            </p>
+          </div>
+        </div>
+        <div class="module-card fade-in">
+          <div class="card-thumb">🎨</div>
+          <div class="card-body">
+            <h3>Visualizer</h3>
+            <span class="card-file">visualizer.py</span>
+            <p>Color-coded bounding boxes (green→red), motion labels, lane dividers, stats dashboard, and critical
+              warnings.</p>
+          </div>
+        </div>
+        <div class="module-card fade-in">
+          <div class="card-thumb">⚙️</div>
+          <div class="card-body">
+            <h3>Configuration</h3>
+            <span class="card-file">config.py</span>
+            <p>Central hub for all tunable parameters including model path, thresholds, weights, colors, and output
+              settings.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PIPELINE — Spotify player style -->
+  <section id="pipeline">
+    <div class="container">
+      <div class="section-header">
+        <h2>Processing Pipeline</h2>
+      </div>
+
+      <div class="pipeline-track">
+        <div class="pipeline-node active" data-step="0">
+          <span class="node-num">Step 1</span>
+          <span class="node-emoji">📹</span>
+          <h4>Detection</h4>
+          <span class="node-sub">YOLOv8</span>
+        </div>
+        <div class="pipeline-node" data-step="1">
+          <span class="node-num">Step 2</span>
+          <span class="node-emoji">🔗</span>
+          <h4>Tracking</h4>
+          <span class="node-sub">Centroid</span>
+        </div>
+        <div class="pipeline-node" data-step="2">
+          <span class="node-num">Step 3</span>
+          <span class="node-emoji">🛤️</span>
+          <h4>Lanes</h4>
+          <span class="node-sub">Zone-based</span>
+        </div>
+        <div class="pipeline-node" data-step="3">
+          <span class="node-num">Step 4</span>
+          <span class="node-emoji">⚡</span>
+          <h4>Risk</h4>
+          <span class="node-sub">Weighted</span>
+        </div>
+        <div class="pipeline-node" data-step="4">
+          <span class="node-num">Step 5</span>
+          <span class="node-emoji">🎨</span>
+          <h4>Visualize</h4>
+          <span class="node-sub">Output</span>
+        </div>
+      </div>
+
+
+
+      <div class="pipeline-info" id="pipelineInfo">
+        <h3>📹 Object Detection — YOLOv8</h3>
+        <p>
+          The YOLOv8 nano model performs real-time inference on each frame, detecting 6 road-relevant
+          classes: <strong>person, bicycle, car, motorcycle, bus, and truck</strong>. Each detection
+          includes bounding box coordinates, class label, confidence score, center point, and area.
+        </p>
+        <div class="pipeline-tags">
+          <span class="tag">YOLOv8 Nano</span>
+          <span class="tag">6 Classes</span>
+          <span class="tag">0.5 Confidence</span>
+          <span class="tag">COCO Dataset</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RISK -->
+  <section id="risk">
+    <div class="container">
+      <div class="section-header">
+        <h2>Risk Assessment</h2>
+      </div>
+
+      <div class="risk-levels fade-in">
+        <div class="risk-tile low">
+          <div class="risk-dot"></div>
+          <div class="r-level">LOW</div>
+          <div class="r-range">0 – 25%</div>
+          <div class="r-action">Normal driving</div>
+        </div>
+        <div class="risk-tile medium">
+          <div class="risk-dot"></div>
+          <div class="r-level">MEDIUM</div>
+          <div class="r-range">25 – 50%</div>
+          <div class="r-action">Monitor closely</div>
+        </div>
+        <div class="risk-tile high">
+          <div class="risk-dot"></div>
+          <div class="r-level">HIGH</div>
+          <div class="r-range">50 – 75%</div>
+          <div class="r-action">Prepare to brake</div>
+        </div>
+        <div class="risk-tile critical">
+          <div class="risk-dot"></div>
+          <div class="r-level">CRITICAL</div>
+          <div class="r-range">75 – 100%</div>
+          <div class="r-action">Immediate hazard</div>
+        </div>
+      </div>
+
+      <div class="formula-panel fade-in">
+        <h3>Scoring Formula</h3>
+        <div class="formula-code">
+          Risk = (0.35 × Distance) + (0.30 × Motion) + (0.20 × Lane) + (0.15 × ObjectType)
+        </div>
+        <div class="weights-row">
+          <div class="weight-item">
+            <div class="w-value">35%</div>
+            <div class="w-label">Distance</div>
+          </div>
+          <div class="weight-item">
+            <div class="w-value">30%</div>
+            <div class="w-label">Motion</div>
+          </div>
+          <div class="weight-item">
+            <div class="w-value">20%</div>
+            <div class="w-label">Lane</div>
+          </div>
+          <div class="weight-item">
+            <div class="w-value">15%</div>
+            <div class="w-label">Object Type</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section id="architecture">
+    <div class="container">
+      <div class="section-header">
+        <h2>Architecture</h2>
+      </div>
+
+      <div class="arch-list fade-in">
+        <div class="arch-item">
+          <span class="a-icon">📹</span>
+          <div class="a-info">
+            <h4>Input Video</h4>
+            <p>Standard dashcam footage (MP4, AVI, MOV)</p>
+          </div>
+        </div>
+        <div class="arch-item">
+          <span class="a-icon">🖼️</span>
+          <div class="a-info">
+            <h4>Frame Extraction</h4>
+            <p>OpenCV reads frame-by-frame at source FPS</p>
+          </div>
+          <span class="a-file">main.py</span>
+        </div>
+        <div class="arch-item">
+          <span class="a-icon">🔍</span>
+          <div class="a-info">
+            <h4>Object Detector</h4>
+            <p>YOLOv8 inference → 6 road-relevant classes detected</p>
+          </div>
+          <span class="a-file">detector.py</span>
+        </div>
+        <div class="arch-item">
+          <span class="a-icon">📡</span>
+          <div class="a-info">
+            <h4>Object Tracker</h4>
+            <p>Centroid matching + area history → motion state</p>
+          </div>
+          <span class="a-file">tracker.py</span>
+        </div>
+        <div class="arch-item">
+          <span class="a-icon">🛤️</span>
+          <div class="a-info">
+            <h4>Lane Detector</h4>
+            <p>Zone classification: LEFT | CENTER | RIGHT</p>
+          </div>
+          <span class="a-file">lane_detector.py</span>
+        </div>
+        <div class="arch-item">
+          <span class="a-icon">⚡</span>
+          <div class="a-info">
+            <h4>Risk Assessor</h4>
+            <p>Weighted 4-factor scoring → LOW / MEDIUM / HIGH / CRITICAL</p>
+          </div>
+          <span class="a-file">risk_assessor.py</span>
+        </div>
+        <div class="arch-item">
+          <span class="a-icon">🎨</span>
+          <div class="a-info">
+            <h4>Visualizer</h4>
+            <p>Annotated frames with boxes, labels, lanes, dashboard</p>
+          </div>
+          <span class="a-file">visualizer.py</span>
+        </div>
+        <div class="arch-item">
+          <span class="a-icon">🎬</span>
+          <div class="a-info">
+            <h4>Output</h4>
+            <p>Annotated MP4 video + optional live display window</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECH STACK -->
+  <section id="tech">
+    <div class="container">
+      <div class="section-header">
+        <h2>Tech Stack</h2>
+      </div>
+
+      <div class="tech-list fade-in">
+        <div class="tech-item">
+          <span class="t-icon">🤖</span>
+          <div>
+            <h4>YOLOv8</h4>
+            <span class="t-ver">≥ 8.0.0</span>
+            <p>Anchor-free object detection</p>
+          </div>
+        </div>
+        <div class="tech-item">
+          <span class="t-icon">👁️</span>
+          <div>
+            <h4>OpenCV</h4>
+            <span class="t-ver">≥ 4.8.0</span>
+            <p>Video I/O and drawing</p>
+          </div>
+        </div>
+        <div class="tech-item">
+          <span class="t-icon">🔢</span>
+          <div>
+            <h4>NumPy</h4>
+            <span class="t-ver">≥ 1.24.0</span>
+            <p>Numerical computing</p>
+          </div>
+        </div>
+        <div class="tech-item">
+          <span class="t-icon">🐍</span>
+          <div>
+            <h4>Python</h4>
+            <span class="t-ver">≥ 3.9</span>
+            <p>Core language</p>
+          </div>
+        </div>
+        <div class="tech-item">
+          <span class="t-icon">🔥</span>
+          <div>
+            <h4>PyTorch</h4>
+            <span class="t-ver">≥ 2.0</span>
+            <p>DL framework</p>
+          </div>
+        </div>
+        <div class="tech-item">
+          <span class="t-icon">💻</span>
+          <div>
+            <h4>CUDA</h4>
+            <span class="t-ver">Optional</span>
+            <p>GPU acceleration</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <h3><span>R</span> ROAD</h3>
+          <p>Real-time Object Analysis for Driving Safety — AI-powered road safety detection system.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Sections</h4>
+          <ul>
+            <li><a href="#video-showcase">Watch</a></li>
+            <li><a href="#modules">Modules</a></li>
+            <li><a href="#pipeline">Pipeline</a></li>
+            <li><a href="#risk">Risk</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>References</h4>
+          <ul>
+            <li><a href="https://docs.ultralytics.com" target="_blank">Ultralytics Docs</a></li>
+            <li><a href="https://arxiv.org/abs/1506.02640" target="_blank">YOLO Paper</a></li>
+            <li><a href="https://www.cvlibs.net/datasets/kitti/" target="_blank">KITTI Dataset</a></li>
+            <li><a href="https://bdd-data.berkeley.edu/" target="_blank">BDD100K</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        Developed as part of an Autonomous Driving Research Project • YOLOv8 + OpenCV + Python
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
