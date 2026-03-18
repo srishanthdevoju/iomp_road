@@ -23,12 +23,14 @@ LANE_LEFT_MAX = 0.35      # 0-35% = left lane
 LANE_CENTER_MAX = 0.65    # 35-65% = center lane
 # 65-100% = right lane
 
-# Risk assessment weights
+# Risk assessment weights (must sum to 1.0)
 RISK_WEIGHTS = {
-    "distance": 0.35,      # Closer = higher risk
-    "motion": 0.30,        # Approaching = higher risk
-    "lane": 0.20,          # Center/same lane = higher risk
-    "object_type": 0.15    # Pedestrians = higher risk
+    "distance": 0.25,      # Closer = higher risk
+    "motion": 0.20,        # Approaching = higher risk
+    "lane": 0.15,          # Center/same lane = higher risk
+    "object_type": 0.10,   # Pedestrians = higher risk
+    "speed": 0.15,         # Faster objects = higher risk
+    "size": 0.15           # Larger bbox (closer) = higher risk
 }
 
 # Risk thresholds
@@ -38,6 +40,15 @@ RISK_THRESHOLDS = {
     "high": 0.75
     # Above 0.75 = critical
 }
+
+# Time-to-collision: escalate to CRITICAL if TTC falls below this (seconds)
+TTC_CRITICAL_SECONDS = 2.0
+
+# Exponential moving average smoothing factor (0 = no smoothing, 1 = no memory)
+RISK_SMOOTHING_ALPHA = 0.3
+
+# Extra risk added when multiple objects converge in the center lane
+MULTI_OBJECT_BOOST = 0.10
 
 # Object type risk multipliers
 OBJECT_RISK = {
