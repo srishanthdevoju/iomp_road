@@ -37,13 +37,11 @@ def reencode_for_website(video_path):
 
     base = os.path.splitext(video_path)[0]
     analyzed_path = f"{base}_analyzed.mp4"
-    output_path = os.path.join("website", "input_analyzed_h264.mp4")
+    output_path = "input_analyzed_h264.mp4"
 
     if not os.path.exists(analyzed_path):
         print(f"ERROR: Analyzed video not found: {analyzed_path}")
         sys.exit(1)
-
-    os.makedirs("website", exist_ok=True)
 
     # Get properties from analyzed video
     cap_analyzed = cv2.VideoCapture(analyzed_path)
@@ -75,7 +73,7 @@ def reencode_for_website(video_path):
     if not writer.isOpened():
         # Fallback codec
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        output_path = os.path.join("website", "input_analyzed_h264.avi")
+        output_path = "input_analyzed_h264.avi"
         writer = cv2.VideoWriter(output_path, fourcc, correct_fps, (w, h))
 
     count = 0
@@ -101,7 +99,7 @@ def open_website():
     print("\n" + "=" * 60)
     print("STEP 3: Opening website...")
     print("=" * 60)
-    html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "website", "index.html")
+    html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html")
     webbrowser.open(f"file:///{html_path}")
     print(f"  Opened: {html_path}")
 
