@@ -1,0 +1,332 @@
+========================================================================
+       ROAD: Real-time Object Analysis for Driving Safety
+              FILE DESCRIPTIONS & DEPENDENCIES
+========================================================================
+
+
+------------------------------------------------------------------------
+FILE 1: config.py
+------------------------------------------------------------------------
+PURPOSE:
+  Central configuration file that stores all tunable parameters and
+  constants used across the entire project. This avoids hardcoding
+  values in individual modules and makes experimentation easy.
+
+WHAT IT DOES:
+  - Defines the YOLO model name to use (yolov8n.pt - nano model)
+  - Lists target COCO class IDs to detect (person, bicycle, car,
+    motorcycle, bus, truck)
+  - Sets detection confidence threshold (0.5)
+  - Defines lane zone boundaries (left: 0-35%, center: 35-65%,
+    right: 65-100% of frame width)
+  - Stores risk assessment weights (distance: 35%, motion: 30%,
+    lane: 20%, object type: 15%)
+  - Defines risk level thresholds (LOW < 0.25, MEDIUM < 0.50,
+    HIGH < 0.75, CRITICAL >= 0.75)
+  - Sets object-specific risk multipliers (pedestrian: 1.0 highest,
+    car: 0.5 lowest)
+  - Configures tracking parameters (max disappeared frames, velocity
+    threshold)
+  - Defines visualization colors in BGR format for each risk level
+  - Stores output settings (FPS, display toggle, save toggle)
+
+USES / IMPORTS:
+  - No external imports (pure Python constants)
+
+USED BY:
+  - detector.py (model name, target classes, confidence threshold)
+  - tracker.py (max disappeared frames, velocity threshold)
+  - lane_detector.py (lane boundary percentages)
+  - risk_assessor.py (risk weights, thresholds, object risk values)
+  - visualizer.py (color definitions)
+  - main.py (output FPS, display/save toggles)
+
+
+------------------------------------------------------------------------
+FILE 2: detector.py
+------------------------------------------------------------------------
+PURPOSE:
+  Handles all object detection using the YOLOv8 deep learning model.
+  This is the first stage of the processing pipeline.
+
+WHAT IT DOES:
+  - Loads the YOLOv8 nano pretrained model on initialization
+  - Takes a video frame (BGR image) as input
+  - Runs YOLO inference on the frame
+  - Filters results to only keep road-relevant classes (person,
+    bicycle, car, motorcycle, bus, truck)
+  - Applies confidence threshold filtering (default 0.5)
+  - For each detection, extracts:
+      * Bounding box coordinates [x1, y1, x2, y2]
+      * Center point (cx, cy)
+      * Class ID and class name
+      * Confidence score
+      * Bounding box area (width * height)
+  - Returns a list of detection dictionaries
+
+USES / IMPORTS:
+  - ultralytics (YOLO) --> YOLOv8 model loading and inference
+  - numpy              --> Array handling for frame data
+  - config             --> YOLO_MODEL, TARGET_CLASSES, CONFIDENCE_THRESHOLD
+
+USED BY:
+  - main.py (called every frame to get detections)
+
+
+------------------------------------------------------------------------
+FILE 3: tracker.py
+------------------------------------------------------------------------
+PURPOSE:
+  Tracks detected objects across video frames and determines their
+  motion direction (approaching, departing, or stationary).
+
+WHAT IT DOES:
+  - Maintains a registry of tracked objects with unique IDs
+  - On each frame update:
+      * Receives new detections from detector.py
+      * Calculates Euclidean distance between existing object centroids
+        and new detection centroids
+      * Matches detections to existing objects using greedy assignment
+        (closest match first, max distance threshold of 100 pixels)
+      * Registers new objects that don't match any existing ones
+      * Marks unmatched existing objects as "disappeared"
+      * Deregisters objects missing for more than 30 consecutive frames
+  - Stores position history (last 30 centroids per object)
+  - Stores bounding box area history (last 30 areas per object)
+  - Motion detection algorithm:
+      * Compares average area of first half vs second half of recent
+        area history (last 10 frames)
+      * Growing bounding box area (>2% increase) = APPROACHING
+        (object is getting closer to the camera)
+      * Shrinking bounding box area (>2% decrease) = DEPARTING
+        (object is moving away from the camera)
+      * Less than 2% change = STATIONARY
+      * Less than 5 frames of history = UNKNOWN
+  - Returns tracked objects with IDs, motion state, and velocity
+
+USES / IMPORTS:
+  - numpy              --> Distance calculations, array operations
+  - collections        --> OrderedDict for maintaining insertion order
+  - config             --> MAX_DISAPPEARED_FRAMES, MIN_VELOCITY_THRESHOLD
+
+USED BY:
+  - main.py (called every frame with detections to get tracked objects)
+
+
+------------------------------------------------------------------------
+FILE 4: lane_detector.py
+------------------------------------------------------------------------
+PURPOSE:
+  Classifies detected objects by their lane position (left, center,
+  or right) relative to the ego vehicle's perspective.
+
+WHAT IT DOES:
+  - Takes the frame width on initialization
+  - Divides the frame into three vertical zones:
+      * LEFT lane:   0% to 35% of frame width
+      * CENTER lane: 35% to 65% of frame width
+      * RIGHT lane:  65% to 100% of frame width
+  - For each tracked object, checks the x-coordinate of its center
+    point and assigns a lane label
+  - Provides lane boundary coordinates for the visualizer to draw
+    vertical lane divider lines
+  - classify_objects() method adds 'lane' key to each tracked object
+
+USES / IMPORTS:
+  - config             --> LANE_LEFT_MAX, LANE_CENTER_MAX
+
+USED BY:
+  - main.py (called every frame to add lane info to tracked objects)
+  - visualizer.py (uses lane boundaries for drawing lane lines)
+
+
+------------------------------------------------------------------------
+FILE 5: risk_assessor.py
+------------------------------------------------------------------------
+PURPOSE:
+  Calculates a composite risk score for each detected object based
+  on multiple weighted factors.
+
+WHAT IT DOES:
+  - Computes four risk factors for each object:
+
+    1. DISTANCE RISK (weight: 35%)
+       - Uses the y-coordinate of the bottom of the bounding box
+       - Objects at the bottom of the frame are closer to the camera
+       - Score = y_bottom / frame_height (0.0 to 1.0)
+
+    2. MOTION RISK (weight: 30%)
+       - APPROACHING = 1.0 (highest danger)
+       - STATIONARY  = 0.5
+       - DEPARTING   = 0.1 (lowest danger)
+       - UNKNOWN     = 0.3
+
+    3. LANE RISK (weight: 20%)
+       - CENTER = 1.0 (directly ahead, highest danger)
+       - LEFT   = 0.5
+       - RIGHT  = 0.5
+
+    4. OBJECT TYPE RISK (weight: 15%)
+       - Person     = 1.0 (most vulnerable)
+       - Bicycle    = 0.8
+       - Motorcycle = 0.7
+       - Bus/Truck  = 0.6
+       - Car        = 0.5
+
+  - Final score = weighted sum of all four factors (0.0 to 1.0)
+  - Classifies into risk levels:
+      * LOW:      score < 0.25
+      * MEDIUM:   score 0.25 to 0.50
+      * HIGH:     score 0.50 to 0.75
+      * CRITICAL: score >= 0.75
+  - assess_all() adds 'risk' dict to each tracked object
+
+USES / IMPORTS:
+  - config             --> RISK_WEIGHTS, RISK_THRESHOLDS, OBJECT_RISK
+
+USED BY:
+  - main.py (called every frame to compute risk for all objects)
+
+
+------------------------------------------------------------------------
+FILE 6: visualizer.py
+------------------------------------------------------------------------
+PURPOSE:
+  Draws all visual annotations on video frames including bounding
+  boxes, labels, lane lines, and the statistics dashboard.
+
+WHAT IT DOES:
+  - draw_frame() is the main method, called once per frame:
+
+    1. LANE LINES:
+       - Draws two vertical cyan lines at the lane boundaries
+       - Labels "LEFT", "CENTER", "RIGHT" at the top of the frame
+
+    2. OBJECT ANNOTATIONS (for each tracked object):
+       - Draws a bounding box rectangle color-coded by risk level:
+         GREEN (low), YELLOW (medium), ORANGE (high), RED (critical)
+       - Draws a filled label background above the bounding box
+       - First line: class name + motion direction
+         e.g., "car [COMING->]" or "truck [<-GOING]" or "person [STOPPED]"
+       - Second line: lane position + risk percentage
+         e.g., "CENTER | Risk: 62%"
+
+    3. STATISTICS DASHBOARD (top-right corner):
+       - Black box showing:
+         * Total objects detected
+         * Number of approaching objects
+         * Number of HIGH risk objects
+         * Number of CRITICAL risk objects
+
+    4. CRITICAL WARNING (bottom of frame):
+       - When any CRITICAL risk object is detected, displays a
+         red banner: "CRITICAL RISK DETECTED"
+
+USES / IMPORTS:
+  - cv2 (OpenCV)       --> Drawing rectangles, text, lines on frames
+  - numpy              --> Array operations for frame manipulation
+  - config             --> COLORS dict (BGR color values per risk level)
+
+USED BY:
+  - main.py (called every frame to generate the annotated output)
+
+
+------------------------------------------------------------------------
+FILE 7: main.py
+------------------------------------------------------------------------
+PURPOSE:
+  Main entry point that orchestrates the complete processing pipeline.
+  Ties all modules together and handles video I/O.
+
+WHAT IT DOES:
+  1. INITIALIZATION:
+     - Creates instances of all five processing modules
+       (Detector, CentroidTracker, LaneDetector, RiskAssessor, Visualizer)
+     - Opens input video with OpenCV VideoCapture
+     - Reads video properties (width, height, FPS, total frames)
+     - Configures modules with frame dimensions
+     - Sets up VideoWriter for output file (MP4 format)
+
+  2. FRAME-BY-FRAME PROCESSING LOOP:
+     For each frame in the video:
+       Step 1: detector.detect(frame)        --> raw detections
+       Step 2: tracker.update(detections)     --> tracked objects with motion
+       Step 3: lane_detector.classify(objs)   --> adds lane position
+       Step 4: risk_assessor.assess_all(objs) --> adds risk scores
+       Step 5: visualizer.draw_frame(...)     --> annotated frame
+     Then:
+       - Writes annotated frame to output video
+       - Displays in OpenCV window (if enabled)
+       - Prints progress every 30 frames
+
+  3. CLEANUP:
+     - Releases video capture and writer
+     - Closes display windows
+     - Prints final statistics
+
+  4. CLI INTERFACE:
+     Supports command-line arguments:
+       --video / -v     : Input video path (default: input.mp4)
+       --output / -o    : Output video path (default: <input>_analyzed.mp4)
+       --no-display     : Skip live display window
+       --no-save        : Skip saving output video
+
+USES / IMPORTS:
+  - cv2 (OpenCV)       --> Video reading, writing, display
+  - argparse           --> Command-line argument parsing
+  - os                 --> File path operations
+  - detector           --> Detector class
+  - tracker            --> CentroidTracker class
+  - lane_detector      --> LaneDetector class
+  - risk_assessor      --> RiskAssessor class
+  - visualizer         --> Visualizer class
+  - config             --> OUTPUT_FPS, DISPLAY_WINDOW, SAVE_OUTPUT
+
+USED BY:
+  - This is the entry point. Run with: python main.py --video input.mp4
+
+
+------------------------------------------------------------------------
+FILE 8: requirements.txt
+------------------------------------------------------------------------
+PURPOSE:
+  Lists all Python package dependencies needed to run the project.
+
+CONTENTS:
+  - ultralytics>=8.0.0    (YOLOv8 model and inference engine)
+  - opencv-python>=4.8.0  (Video I/O, image processing, drawing)
+  - numpy>=1.24.0         (Numerical operations, array handling)
+
+INSTALL COMMAND:
+  pip install -r requirements.txt
+
+
+========================================================================
+                    PROCESSING PIPELINE FLOW
+========================================================================
+
+  input.mp4
+      |
+      v
+  [Frame Extraction] -- OpenCV reads one frame at a time
+      |
+      v
+  [detector.py]      -- YOLOv8 detects cars, people, trucks, etc.
+      |                  Output: list of {bbox, class, confidence, area}
+      v
+  [tracker.py]       -- Matches objects across frames by centroid distance
+      |                  Tracks bbox area changes over time
+      |                  Output: {id: {detection + motion_state}}
+      v
+  [lane_detector.py] -- Checks center x-position of each object
+      |                  Output: adds 'lane' = LEFT/CENTER/RIGHT
+      v
+  [risk_assessor.py] -- Computes weighted risk score per object
+      |                  Output: adds 'risk' = {score, level, factors}
+      v
+  [visualizer.py]    -- Draws boxes, labels, lanes, dashboard on frame
+      |
+      v
+  input_analyzed.mp4 (saved) + Display Window (shown)
+
+========================================================================
