@@ -46,11 +46,10 @@ road_project/
 ├── requirements.txt       # Python dependencies
 ├── yolov8n.pt             # YOLOv8 nano weights (auto-downloaded)
 ├── input.mp4              # Your dashcam footage (user-provided)
-├── website/
-│   ├── index.html         # Web viewer
-│   ├── styles.css         # Styling
-│   ├── script.js          # Interactivity
-│   └── input_analyzed_h264.mp4  # H.264 web-compatible output
+│── index.html         # Web viewer
+│── styles.css         # Styling
+│── script.js          # Interactivity
+│── input_analyzed_h264.mp4  # H.264 web-compatible output
 ├── .gitignore
 ├── LICENSE
 └── README.md
